@@ -6,9 +6,8 @@ module Bitmap
 
     attr_accessor :width, :height, :data
 
-    def initialize(w, h)
-      @width = w.to_i
-      @height = h.to_i
+    def initialize(width, height)
+      @width, @height = width.to_i, height.to_i
 
       validate_size
       reset_data
@@ -46,17 +45,17 @@ module Bitmap
     private
 
     def validate_size
-      return if VALID_SIZE_RANGE.include?(width) && VALID_SIZE_RANGE.include?(height)
+      return if VALID_SIZE_RANGE.cover?(width) && VALID_SIZE_RANGE.cover?(height)
       raise "Image size #{[width, height]} is beyond the scope #{VALID_SIZE_RANGE}."
     end
 
     def validate_coordinates(x, y)
-      return if (1..width).include?(x) && (1..height).include?(y)
+      return if (1..width).cover?(x) && (1..height).cover?(y)
       raise "Coordinates #{[x, y]} are beyond the image dimensions #{[width, height]}."
     end
 
     def validate_colour(colour)
-      return if VALID_COLOURS.include?(colour)
+      return if VALID_COLOURS.cover?(colour)
       raise "Colour #{colour} is invalid."
     end
 

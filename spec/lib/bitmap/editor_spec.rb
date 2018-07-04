@@ -170,7 +170,7 @@ RSpec.describe Bitmap::Editor do
           context 'L command' do
             it_behaves_like 'command call with args' do
               let(:cmd) { 'L 2 2 A' }
-              let(:args) { ['2', '2', 'A'] }
+              let(:args) { %w(2 2 A) }
               let(:method) { :colour_pixel }
             end
           end
@@ -178,7 +178,7 @@ RSpec.describe Bitmap::Editor do
           context 'V command' do
             it_behaves_like 'command call with args' do
               let(:cmd) { 'V 2 5 7 A' }
-              let(:args) { ['2', '5', '7', 'A'] }
+              let(:args) { %w(2 5 7 A) }
               let(:method) { :draw_vertical_line }
             end
           end
@@ -186,7 +186,7 @@ RSpec.describe Bitmap::Editor do
           context 'H command' do
             it_behaves_like 'command call with args' do
               let(:cmd) { 'H 2 5 7 A' }
-              let(:args) { ['2', '5', '7', 'A'] }
+              let(:args) { %w(2 5 7 A) }
               let(:method) { :draw_horizontal_line }
             end
           end
@@ -213,7 +213,7 @@ RSpec.describe Bitmap::Editor do
             it_behaves_like 'invalid command' do
               let(:error_messages) do
                 [
-                  "An error occured in line 2 (Z)",
+                  'An error occured in line 2 (Z)',
                   'Unrecognised command.'
                 ]
               end

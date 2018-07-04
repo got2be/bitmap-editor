@@ -1,4 +1,4 @@
-require './lib/bitmap/data'
+require_relative 'data'
 
 module Bitmap
   class Editor
@@ -30,8 +30,7 @@ module Bitmap
     end
 
     def process_line(line)
-      args = line.split(' ')
-      cmd = args.shift
+      cmd, *args = line.split
 
       raise 'Please create image before manipulating it.' if cmd != 'I' && @bitmap.nil?
 
