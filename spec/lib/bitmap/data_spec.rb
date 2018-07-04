@@ -256,6 +256,12 @@ RSpec.describe Bitmap::Data do
     end
   end
 
-  xdescribe '.show' do
+  describe '.to_s' do
+    let(:expected_output) { ((default_colour * width + "\n") * height).chomp }
+    subject { described_obj.to_s }
+
+    it 'returns current image' do
+      expect(subject).to eq(expected_output)
+    end
   end
 end

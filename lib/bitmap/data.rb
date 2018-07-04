@@ -39,7 +39,8 @@ module Bitmap
       x1.upto(x2).each { |x| colour_pixel(x, y, colour) }
     end
 
-    def show
+    def to_s
+      data.map(&:join).join("\n")
     end
 
     private
