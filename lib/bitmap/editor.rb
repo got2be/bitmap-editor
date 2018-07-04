@@ -32,7 +32,7 @@ module Bitmap
     def process_line(line)
       cmd, *args = line.split
 
-      raise 'Please create image before manipulating it.' if cmd != 'I' && @bitmap.nil?
+      validate_command(cmd)
 
       case cmd
       when 'I'
@@ -50,6 +50,11 @@ module Bitmap
       else
         raise 'Unrecognised command.'
       end
+    end
+
+    def validate_command(cmd)
+      return if cmd == 'I' || !!@bitmap
+      raise 'Please create image before manipulating it.'
     end
   end
 end
