@@ -25,7 +25,11 @@ module Bitmap
       data[y - 1][x - 1] = colour
     end
 
-    def draw_vertical_line(x, y1, y2, c)
+    def draw_vertical_line(x, y1, y2, colour)
+      x, y1, y2 = x.to_i, y1.to_i, y2.to_i
+      raise "Coordinate y1 is greater than y2 #{[y1, y2]}." if y1 > y2
+      validate_coordinates(x, y2) # to avoid changing pixels in case when y2 is too large
+      y1.upto(y2).each { |y| colour_pixel(x, y, colour) }
     end
 
     def draw_horizontal_line(x1, x2, y, c)
@@ -43,7 +47,7 @@ module Bitmap
 
     def validate_coordinates(x, y)
       return if (1..width).include?(x) && (1..height).include?(y)
-      raise "Coordinates #{[x, y]} are beyond the image dimensions."
+      raise "Coordinates #{[x, y]} are beyond the image dimensions #{[width, height]}."
     end
 
     def validate_colour(colour)

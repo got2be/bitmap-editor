@@ -6,11 +6,24 @@ RSpec.describe Bitmap::Data do
   let(:height) { Random.rand(max_size) + 1 }
   let(:default_colour) { 'O' }
   let(:described_obj) { described_class.new(width, height) }
+  let(:groupped_data) { described_obj.data.flatten.group_by { |c| c } }
 
   shared_examples_for 'reset image data' do
     it 'fills image with default colour' do
       subject
       expect(described_obj.data.flatten.join).to eq(default_colour * width * height)
+    end
+  end
+
+  shared_examples_for 'invalid coordinates' do
+    it 'raises an error' do
+      expect { subject }.to raise_error("Coordinates [#{x}, #{y}] are beyond the image dimensions #{[width, height]}.")
+    end
+  end
+
+  shared_examples_for 'invalid colour' do
+    it 'raises an error' do
+      expect { subject }.to raise_error("Colour #{colour} is invalid.")
     end
   end
 
@@ -95,14 +108,10 @@ RSpec.describe Bitmap::Data do
     context 'colour is invalid' do
       let(:colour) { 'a' }
 
-      it 'raises an error' do
-        expect { subject }.to raise_error("Colour #{colour} is invalid.")
-      end
+      it_behaves_like 'invalid colour'
     end
 
     context 'colour is valid' do
-      let(:groupped_data) { described_obj.data.flatten.group_by { |c| c } }
-
       it 'sets the colour of specified pixel' do
         expect { subject }.to change { described_obj.data[y - 1][x - 1] }.from(default_colour).to(colour)
       end
@@ -115,7 +124,70 @@ RSpec.describe Bitmap::Data do
     end
   end
 
-  xdescribe '.draw_vertical_line' do
+  describe '.draw_vertical_line' do
+    let(:x) { Random.rand(width) + 1 }
+    let(:y1) { Random.rand(height) + 1 }
+    let(:y2) { Random.rand(y1..height) }
+    let(:colour) { 'A' }
+
+    subject { described_obj.draw_vertical_line(x, y1, y2, colour) }
+
+    context 'args are invalid' do
+      context 'x is too small' do
+        let(:x) { 0 }
+        let(:y) { y2 }
+        it_behaves_like 'invalid coordinates'
+      end
+
+      context 'x is too large' do
+        let(:x) { width + 1 }
+        let(:y) { y2 }
+        it_behaves_like 'invalid coordinates'
+      end
+
+      context 'y1 is too small' do
+        let(:y1) { 0 }
+        let(:y) { y1 }
+        it_behaves_like 'invalid coordinates'
+      end
+
+      context 'y2 is too large' do
+        let(:y2) { height + 1 }
+        let(:y) { y2 }
+        it_behaves_like 'invalid coordinates'
+      end
+
+      context 'y1 is greater than y2' do
+        let(:height) { 10 } # reassign height to avoid 1x1 picture
+        let(:y1) { 4 }
+        let(:y2) { 3 }
+
+        it 'raises an error' do
+          expect { subject }.to raise_error("Coordinate y1 is greater than y2 #{[y1, y2]}.")
+        end
+      end
+
+      context 'colour is invalid' do
+        let(:colour) { 'a' }
+        it_behaves_like 'invalid colour'
+      end
+    end
+
+    context 'args are valid' do
+      it 'changes colour of pixels correctly' do
+        subject
+        y1.upto(y2).each do |y|
+          expect(described_obj.data[y - 1][x - 1]).to eq(colour)
+        end
+      end
+
+      it 'does not change other pixels' do
+        subject
+        affected_pixels_num = y2 - y1 + 1
+        expect(groupped_data[colour].length).to eq(affected_pixels_num)
+        expect(groupped_data[default_colour].length).to eq(width * height - affected_pixels_num)
+      end
+    end
   end
 
   xdescribe '.draw_horizontal_line' do
