@@ -11,11 +11,11 @@ module Bitmap
       @height = h.to_i
 
       validate_size
-
-      @data = @data = Array.new(height) { Array.new(width, DEFAULT_COLOUR) }
+      reset_data
     end
 
     def clear
+      reset_data
     end
 
     def colour_pixel(x, y, colour)
@@ -49,6 +49,10 @@ module Bitmap
     def validate_colour(colour)
       return if VALID_COLOURS.include?(colour)
       raise "Colour #{colour} is invalid."
+    end
+
+    def reset_data
+      @data = Array.new(height) { Array.new(width, DEFAULT_COLOUR) }
     end
   end
 end

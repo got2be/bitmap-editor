@@ -7,6 +7,13 @@ RSpec.describe Bitmap::Data do
   let(:default_colour) { 'O' }
   let(:described_obj) { described_class.new(width, height) }
 
+  shared_examples_for 'reset image data' do
+    it 'fills image with default colour' do
+      subject
+      expect(described_obj.data.flatten.join).to eq(default_colour * width * height)
+    end
+  end
+
   describe '.new' do
     subject { described_obj }
 
@@ -44,13 +51,16 @@ RSpec.describe Bitmap::Data do
         expect(subject.data.map(&:length).uniq).to eq([width])
       end
 
-      it 'fills image with default colour' do
-        expect(subject.data.map(&:join).join).to eq(default_colour * width * height)
-      end
+      it_behaves_like 'reset image data'
     end
   end
 
-  xdescribe '.clear' do
+  describe '.clear' do
+    subject { described_obj.clear }
+
+    before { described_obj.colour_pixel(1, 1, 'A') }
+
+    it_behaves_like 'reset image data'
   end
 
   describe '.colour_pixel' do
