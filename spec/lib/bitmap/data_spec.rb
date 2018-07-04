@@ -190,7 +190,70 @@ RSpec.describe Bitmap::Data do
     end
   end
 
-  xdescribe '.draw_horizontal_line' do
+  describe '.draw_horizontal_line' do
+    let(:x1) { Random.rand(width) + 1 }
+    let(:x2) { Random.rand(x1..width) }
+    let(:y) { Random.rand(height) + 1 }
+    let(:colour) { 'A' }
+
+    subject { described_obj.draw_horizontal_line(x1, x2, y, colour) }
+
+    context 'args are invalid' do
+      context 'x1 is too small' do
+        let(:x1) { 0 }
+        let(:x) { x1 }
+        it_behaves_like 'invalid coordinates'
+      end
+
+      context 'x2 is too large' do
+        let(:x2) { width + 1 }
+        let(:x) { x2 }
+        it_behaves_like 'invalid coordinates'
+      end
+
+      context 'y is too small' do
+        let(:y) { 0 }
+        let(:x) { x2 }
+        it_behaves_like 'invalid coordinates'
+      end
+
+      context 'y is too large' do
+        let(:y) { height + 1 }
+        let(:x) { x2 }
+        it_behaves_like 'invalid coordinates'
+      end
+
+      context 'x1 is greater than x2' do
+        let(:width) { 10 } # reassign width to avoid 1x1 picture
+        let(:x1) { 4 }
+        let(:x2) { 3 }
+
+        it 'raises an error' do
+          expect { subject }.to raise_error("Coordinate x1 is greater than x2 #{[x1, x2]}.")
+        end
+      end
+
+      context 'colour is invalid' do
+        let(:colour) { 'a' }
+        it_behaves_like 'invalid colour'
+      end
+    end
+
+    context 'args are valid' do
+      it 'changes colour of pixels correctly' do
+        subject
+        x1.upto(x2).each do |x|
+          expect(described_obj.data[y - 1][x - 1]).to eq(colour)
+        end
+      end
+
+      it 'does not change other pixels' do
+        subject
+        affected_pixels_num = x2 - x1 + 1
+        expect(groupped_data[colour].length).to eq(affected_pixels_num)
+        expect(groupped_data[default_colour].length).to eq(width * height - affected_pixels_num)
+      end
+    end
   end
 
   xdescribe '.show' do

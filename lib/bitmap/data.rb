@@ -32,7 +32,11 @@ module Bitmap
       y1.upto(y2).each { |y| colour_pixel(x, y, colour) }
     end
 
-    def draw_horizontal_line(x1, x2, y, c)
+    def draw_horizontal_line(x1, x2, y, colour)
+      x1, x2, y = x1.to_i, x2.to_i, y.to_i
+      raise "Coordinate x1 is greater than x2 #{[x1, x2]}." if x1 > x2
+      validate_coordinates(x2, y) # to avoid changing pixels in case when x2 is too large
+      x1.upto(x2).each { |x| colour_pixel(x, y, colour) }
     end
 
     def show
