@@ -23,6 +23,11 @@ RSpec.describe Bitmap::Editor do
         it_behaves_like 'bad file'
       end
 
+      context 'file is a directory' do
+        let(:file) { 'lib' }
+        it_behaves_like 'bad file'
+      end
+
       context 'file is not readable' do
         before { allow(File).to receive(:readable?).with(file).and_return(false) }
         it_behaves_like 'bad file'

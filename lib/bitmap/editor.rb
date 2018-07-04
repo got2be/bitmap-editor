@@ -18,7 +18,7 @@ module Bitmap
     private
 
     def validate_file(file)
-      !file.nil? && File.exists?(file) && File.readable?(file)
+      !file.nil? && File.file?(file) && File.readable?(file)
     end
   end
 end
