@@ -44,7 +44,7 @@ RSpec.describe Bitmap::Editor do
         end
       end
 
-      shared_examples_for 'bitmap error message' do
+      shared_examples_for 'invalid command' do
         it 'returns error message' do
           error_messages.each do |msg|
             expect($stdout).to receive(:puts).with(msg).once
@@ -59,7 +59,7 @@ RSpec.describe Bitmap::Editor do
           fake_file.rewind
         end
 
-        it_behaves_like 'bitmap error message' do
+        it_behaves_like 'invalid command' do
           let(:error_messages) do
             [
               'An error occured in line 1 (V 1 2 3 A)',
@@ -78,7 +78,7 @@ RSpec.describe Bitmap::Editor do
             allow(Bitmap::Data).to receive(:new).with('10', '20').and_raise('Some error')
           end
 
-          it_behaves_like 'bitmap error message' do
+          it_behaves_like 'invalid command' do
             let(:error_messages) do
               [ 'An error occured in line 1 (I 10 20)', 'Some error' ]
             end
@@ -113,7 +113,7 @@ RSpec.describe Bitmap::Editor do
                 allow(bitmap).to receive(method)
               end
 
-              it_behaves_like 'bitmap error message' do
+              it_behaves_like 'invalid command' do
                 let(:error_messages) do
                   [
                     "An error occured in line 2 (#{cmd_without_args})",
@@ -130,7 +130,7 @@ RSpec.describe Bitmap::Editor do
                 allow(bitmap).to receive(method).with(*args).and_raise('Some error')
               end
 
-              it_behaves_like 'bitmap error message' do
+              it_behaves_like 'invalid command' do
                 let(:error_messages) do
                   [
                     "An error occured in line 2 (#{cmd})",
@@ -210,7 +210,7 @@ RSpec.describe Bitmap::Editor do
               fake_file.rewind
             end
 
-            it_behaves_like 'bitmap error message' do
+            it_behaves_like 'invalid command' do
               let(:error_messages) do
                 [
                   "An error occured in line 2 (Z)",
