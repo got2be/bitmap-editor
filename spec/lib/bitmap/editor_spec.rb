@@ -3,7 +3,7 @@ require './lib/bitmap/editor'
 RSpec.describe Bitmap::Editor do
   context '.run' do
     let(:file) { 'examples/show.txt' }
-    subject { described_class.new.run(file) }
+    subject { described_class.new(file).run }
 
     context 'something wrong with the file' do
       shared_examples_for 'bad file' do

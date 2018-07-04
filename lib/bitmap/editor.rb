@@ -1,8 +1,13 @@
 module Bitmap
   class Editor
+    attr_reader :file
 
-    def run(file)
-      return puts "Please provide correct file." unless validate_file(file)
+    def initialize(file)
+      @file = file
+    end
+
+    def run
+      return puts "Please provide correct file." unless validate_file
 
       File.open(file).each do |line|
         line = line.chomp
@@ -17,7 +22,7 @@ module Bitmap
 
     private
 
-    def validate_file(file)
+    def validate_file
       !file.nil? && File.file?(file) && File.readable?(file)
     end
   end
