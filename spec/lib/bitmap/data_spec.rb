@@ -1,13 +1,14 @@
 require './lib/bitmap/data'
 
 RSpec.describe Bitmap::Data do
-  describe '.new' do
-    let(:max_size) { 250 }
-    let(:width) { Random.rand(max_size) + 1 }
-    let(:height) { Random.rand(max_size) + 1 }
-    let(:default_colour) { 'O' }
+  let(:max_size) { 250 }
+  let(:width) { Random.rand(max_size) + 1 }
+  let(:height) { Random.rand(max_size) + 1 }
+  let(:default_colour) { 'O' }
+  let(:described_obj) { described_class.new(width, height) }
 
-    subject { described_class.new(width, height) }
+  describe '.new' do
+    subject { described_obj }
 
     context 'args are not ok' do
       shared_examples_for 'invalid args' do
@@ -52,7 +53,56 @@ RSpec.describe Bitmap::Data do
   xdescribe '.clear' do
   end
 
-  xdescribe '.set_colour' do
+  describe '.colour_pixel' do
+    let(:x) { Random.rand(width) + 1 }
+    let(:y) { Random.rand(height) + 1 }
+    let(:colour) { 'A' }
+
+    subject { described_obj.colour_pixel(x, y, colour) }
+
+    context 'coordinates are invalid' do
+      context 'x coordinate is too small' do
+        let(:x) { 0 }
+        it_behaves_like 'invalid coordinates'
+      end
+
+      context 'x coordinate is too large' do
+        let(:x) { width + 1 }
+        it_behaves_like 'invalid coordinates'
+      end
+
+      context 'y coordinate is too large' do
+        let(:y) { height + 1 }
+        it_behaves_like 'invalid coordinates'
+      end
+
+      context 'y coordinate is too small' do
+        let(:y) { 0 }
+        it_behaves_like 'invalid coordinates'
+      end
+    end
+
+    context 'colour is invalid' do
+      let(:colour) { 'a' }
+
+      it 'raises an error' do
+        expect { subject }.to raise_error("Colour #{colour} is invalid.")
+      end
+    end
+
+    context 'colour is valid' do
+      let(:groupped_data) { described_obj.data.flatten.group_by { |c| c } }
+
+      it 'sets the colour of specified pixel' do
+        expect { subject }.to change { described_obj.data[y - 1][x - 1] }.from(default_colour).to(colour)
+      end
+
+      it 'does not change other pixels' do
+        subject
+        expect(groupped_data[colour].length).to eq(1)
+        expect(groupped_data[default_colour].length).to eq(width * height - 1)
+      end
+    end
   end
 
   xdescribe '.draw_vertical_line' do

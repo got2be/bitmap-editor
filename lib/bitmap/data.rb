@@ -1,7 +1,8 @@
 module Bitmap
   class Data
     DEFAULT_COLOUR = 'O'.freeze
-    VALID_SIZE_RANGE = (1..250)
+    VALID_SIZE_RANGE = 1..250
+    VALID_COLOURS = 'A'..'Z'
 
     attr_accessor :width, :height, :data
 
@@ -17,7 +18,11 @@ module Bitmap
     def clear
     end
 
-    def set_colour(x, y, c)
+    def colour_pixel(x, y, colour)
+      x, y = x.to_i, y.to_i
+      validate_coordinates(x, y)
+      validate_colour(colour)
+      data[y - 1][x - 1] = colour
     end
 
     def draw_vertical_line(x, y1, y2, c)
@@ -34,6 +39,16 @@ module Bitmap
     def validate_size
       return if VALID_SIZE_RANGE.include?(width) && VALID_SIZE_RANGE.include?(height)
       raise "Image size #{[width, height]} is beyond the scope #{VALID_SIZE_RANGE}."
+    end
+
+    def validate_coordinates(x, y)
+      return if (1..width).include?(x) && (1..height).include?(y)
+      raise "Coordinates #{[x, y]} are beyond the image dimensions."
+    end
+
+    def validate_colour(colour)
+      return if VALID_COLOURS.include?(colour)
+      raise "Colour #{colour} is invalid."
     end
   end
 end
