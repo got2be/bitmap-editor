@@ -1,18 +1,41 @@
 require './lib/bitmap/editor'
 
 RSpec.describe Bitmap::Editor do
+  let(:file) { 'examples/show.txt' }
+  let(:described_obj) { described_class.new(file) }
+
+  shared_examples_for 'bad file' do
+    it 'returns error message' do
+      expect($stdout).to receive(:puts).with('Please provide correct file.').once
+      subject
+    end
+  end
+
+  shared_examples_for 'manipulating nonexistent data' do
+    it 'raises error' do
+      expect { subject }.to raise_error('Please create image before manipulating it.')
+    end
+  end
+
+  shared_examples_for 'manipulating nexistent data' do
+    let(:bitmap_data) { instance_double(Bitmap::Data) }
+    before { described_obj.bitmap = bitmap_data }
+
+    it 'calls corresponding bitmap method' do
+      expect(bitmap_data).to receive(method).with(*args).once
+      subject
+    end
+  end
+
   context '.run' do
-    let(:file) { 'examples/show.txt' }
-    subject { described_class.new(file).run }
+    let(:stdout) { $stdout }
+    subject { described_obj.run }
+
+    # removing following lines adds some trash to rspec output
+    before { $stdout = StringIO.new }
+    after { $stdout = stdout }
 
     context 'something wrong with the file' do
-      shared_examples_for 'bad file' do
-        it 'returns error message' do
-          expect($stdout).to receive(:puts).with('Please provide correct file.').once
-          subject
-        end
-      end
-
       context 'file name is nil' do
         let(:file) { nil }
         it_behaves_like 'bad file'
@@ -44,182 +67,155 @@ RSpec.describe Bitmap::Editor do
         end
       end
 
-      shared_examples_for 'invalid command' do
-        it 'returns error message' do
-          error_messages.each do |msg|
-            expect($stdout).to receive(:puts).with(msg).once
-          end
-          subject
-        end
-      end
-
-      context 'the first command does not create new image' do
-        before do
-          fake_file.puts('V 1 2 3 A')
-          fake_file.rewind
-        end
-
-        it_behaves_like 'invalid command' do
-          let(:error_messages) do
-            [
-              'An error occured in line 1 (V 1 2 3 A)',
-              'Please create image before manipulating it.'
-            ]
-          end
-        end
-      end
-
-      context 'the first command creates new image' do
-        before { fake_file.puts('I 10 20') }
-
-        context 'args are invalid' do
+      context 'file contains commands' do
+        context 'command raises error' do
           before do
+            fake_file.puts('V 1 2 3 A')
+            fake_file.puts('L 1 2 A')
             fake_file.rewind
-            allow(Bitmap::Data).to receive(:new).with('10', '20').and_raise('Some error')
+            allow(Bitmap::Command).to receive(:new).with('V', %w(1 2 3 A), described_obj).and_raise('Some error.')
           end
 
-          it_behaves_like 'invalid command' do
-            let(:error_messages) do
-              [ 'An error occured in line 1 (I 10 20)', 'Some error' ]
-            end
+          it 'returns error message' do
+            expect($stdout).to receive(:puts).with('An error occured in line 1 (V 1 2 3 A)').once
+            expect($stdout).to receive(:puts).with('Some error.').once
+            subject
+          end
+
+          it 'does not process further commands' do
+            expect(Bitmap::Command).not_to receive(:new).with('S', %w(1 2 A), described_obj)
+            subject
           end
         end
 
-        context 'args are valid' do
-          let(:bitmap) { instance_double(Bitmap::Data) }
+        context 'valid commands' do
+          let(:command1) { instance_double(Bitmap::Command) }
+          let(:command2) { instance_double(Bitmap::Command) }
+          let(:command3) { instance_double(Bitmap::Command) }
 
           before do
-            allow(Bitmap::Data).to receive(:new).with('10', '20').and_return(bitmap)
+            fake_file.puts('I 10 20')
+            fake_file.puts('L 1 2 A')
+            fake_file.puts('S')
+            fake_file.rewind
+            allow(Bitmap::Command).to receive(:new).with('I', %w(10 20), described_obj).and_return(command1)
+            allow(Bitmap::Command).to receive(:new).with('L', %w(1 2 A), described_obj).and_return(command2)
+            allow(Bitmap::Command).to receive(:new).with('S', [], described_obj).and_return(command3)
           end
 
-          shared_examples_for 'command call with args' do
-            context 'call with args' do
-              before do
-                fake_file.puts(cmd)
-                fake_file.rewind
-              end
-
-              it 'calls proper bitmap method' do
-                expect(bitmap).to receive(method).with(*args).once
-                subject
-              end
-            end
-
-            context 'call with no args' do
-              let(:cmd_without_args) { cmd.chars.first }
-              before do
-                fake_file.puts(cmd_without_args)
-                fake_file.rewind
-                allow(bitmap).to receive(method)
-              end
-
-              it_behaves_like 'invalid command' do
-                let(:error_messages) do
-                  [
-                    "An error occured in line 2 (#{cmd_without_args})",
-                    "Wrong number of arguments. Expected #{args.length}, got 0."
-                  ]
-                end
-              end
-            end
-
-            context 'method raises error' do
-              before do
-                fake_file.puts(cmd)
-                fake_file.rewind
-                allow(bitmap).to receive(method).with(*args).and_raise('Some error')
-              end
-
-              it_behaves_like 'invalid command' do
-                let(:error_messages) do
-                  [
-                    "An error occured in line 2 (#{cmd})",
-                    'Some error'
-                  ]
-                end
-              end
-            end
-          end
-
-          context 'C command' do
-            context 'no args passed' do
-              before do
-                fake_file.puts('C')
-                fake_file.rewind
-              end
-
-              it 'calls bitmap.clear with no args' do
-                expect(bitmap).to receive(:clear).with(no_args).once
-                subject
-              end
-            end
-
-            context 'some odd args passed' do
-              before do
-                fake_file.puts('C 1 2')
-                fake_file.rewind
-              end
-
-              it 'ignores args' do
-                expect(bitmap).to receive(:clear).with(no_args).once
-                subject
-              end
-            end
-          end
-
-          context 'L command' do
-            it_behaves_like 'command call with args' do
-              let(:cmd) { 'L 2 2 A' }
-              let(:args) { %w(2 2 A) }
-              let(:method) { :colour_pixel }
-            end
-          end
-
-          context 'V command' do
-            it_behaves_like 'command call with args' do
-              let(:cmd) { 'V 2 5 7 A' }
-              let(:args) { %w(2 5 7 A) }
-              let(:method) { :draw_vertical_line }
-            end
-          end
-
-          context 'H command' do
-            it_behaves_like 'command call with args' do
-              let(:cmd) { 'H 2 5 7 A' }
-              let(:args) { %w(2 5 7 A) }
-              let(:method) { :draw_horizontal_line }
-            end
-          end
-
-          context 'S command' do
-            before do
-              fake_file.puts('S')
-              fake_file.rewind
-              allow(bitmap).to receive(:to_s).and_return("OOO\nAAA\nOOO")
-            end
-
-            it 'prints the result' do
-              expect($stdout).to receive(:puts).with(bitmap.to_s).once
-              subject
-            end
-          end
-
-          context 'unrecognised command' do
-            before do
-              fake_file.puts('Z')
-              fake_file.rewind
-            end
-
-            it_behaves_like 'invalid command' do
-              let(:error_messages) do
-                [
-                  'An error occured in line 2 (Z)',
-                  'Unrecognised command.'
-                ]
-              end
-            end
+          it 'processes all commands one by one' do
+            expect(command1).to receive(:perform)
+            expect(command2).to receive(:perform)
+            expect(command3).to receive(:perform)
+            subject
           end
         end
+      end
+    end
+  end
+
+  context '.create_bitmap' do
+    subject { described_obj.create_bitmap(10, 20) }
+
+    context 'bitmap data is not created yet' do
+      let(:bitmap_data) { instance_double(Bitmap::Data) }
+
+      before do
+        allow(Bitmap::Data).to receive(:new).with(10, 20).and_return(bitmap_data)
+      end
+
+      it 'creates new bitmap data' do
+        expect { subject }.to change { described_obj.bitmap }.from(nil).to(bitmap_data)
+      end
+    end
+
+    context 'bitmap data exists' do
+      let(:old_bitmap_data) { instance_double(Bitmap::Data) }
+      let(:bitmap_data) { instance_double(Bitmap::Data) }
+
+      before do
+        described_obj.bitmap = old_bitmap_data
+        allow(Bitmap::Data).to receive(:new).with(10, 20).and_return(bitmap_data)
+      end
+
+      it 'creates new bitmap data' do
+        expect { subject }.to change { described_obj.bitmap }.from(old_bitmap_data).to(bitmap_data)
+      end
+    end
+  end
+
+  context '.clear' do
+    subject { described_obj.clear }
+
+    context 'bitmap data is not created yet' do
+      it_behaves_like 'manipulating nonexistent data'
+    end
+
+    it_behaves_like 'manipulating nexistent data' do
+      let(:method) { :clear }
+      let(:args) { no_args }
+    end
+  end
+
+  context '.colour_pixel' do
+    subject { described_obj.colour_pixel(1, 2, 'A') }
+
+    context 'bitmap data is not created yet' do
+      it_behaves_like 'manipulating nonexistent data'
+    end
+
+    context 'bitmap data exists' do
+      it_behaves_like 'manipulating nexistent data' do
+        let(:method) { :colour_pixel }
+        let(:args) { [1, 2, 'A'] }
+      end
+    end
+  end
+
+  context '.draw_vertical_line' do
+    subject { described_obj.draw_vertical_line(1, 2, 3, 'A') }
+
+    context 'bitmap data is not created yet' do
+      it_behaves_like 'manipulating nonexistent data'
+    end
+
+    context 'bitmap data exists' do
+      it_behaves_like 'manipulating nexistent data' do
+        let(:method) { :draw_vertical_line }
+        let(:args) { [1, 2, 3, 'A'] }
+      end
+    end
+  end
+
+  context '.draw_horizontal_line' do
+    subject { described_obj.draw_horizontal_line(1, 2, 3, 'A') }
+
+    context 'bitmap data is not created yet' do
+      it_behaves_like 'manipulating nonexistent data'
+    end
+
+    context 'bitmap data exists' do
+      it_behaves_like 'manipulating nexistent data' do
+        let(:method) { :draw_horizontal_line }
+        let(:args) { [1, 2, 3, 'A'] }
+      end
+    end
+  end
+
+  context '.show' do
+    subject { described_obj.show }
+
+    context 'bitmap data is not created yet' do
+      it_behaves_like 'manipulating nonexistent data'
+    end
+
+    context 'bitmap data exists' do
+      let(:bitmap_data) { instance_double(Bitmap::Data, to_s: "OOO\nOAO\nOOO") }
+      before { described_obj.bitmap = bitmap_data }
+
+      it 'calls prints bitmap' do
+        expect($stdout).to receive(:puts).with("OOO\nOAO\nOOO").once
+        subject
       end
     end
   end

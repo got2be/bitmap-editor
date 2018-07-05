@@ -7,8 +7,7 @@ module Bitmap
     attr_accessor :width, :height, :data
 
     def initialize(width, height)
-      @width, @height = width.to_i, height.to_i
-
+      @width, @height = width, height
       validate_size
       reset_data
     end
@@ -18,21 +17,18 @@ module Bitmap
     end
 
     def colour_pixel(x, y, colour)
-      x, y = x.to_i, y.to_i
       validate_coordinates(x, y)
       validate_colour(colour)
       data[y - 1][x - 1] = colour
     end
 
     def draw_vertical_line(x, y1, y2, colour)
-      x, y1, y2 = x.to_i, y1.to_i, y2.to_i
       raise "Coordinate y1 is greater than y2 #{[y1, y2]}." if y1 > y2
       validate_coordinates(x, y2) # to avoid changing pixels in case when y2 is too large
       y1.upto(y2).each { |y| colour_pixel(x, y, colour) }
     end
 
     def draw_horizontal_line(x1, x2, y, colour)
-      x1, x2, y = x1.to_i, x2.to_i, y.to_i
       raise "Coordinate x1 is greater than x2 #{[x1, x2]}." if x1 > x2
       validate_coordinates(x2, y) # to avoid changing pixels in case when x2 is too large
       x1.upto(x2).each { |x| colour_pixel(x, y, colour) }

@@ -1,8 +1,9 @@
+require_relative 'command'
 require_relative 'data'
 
 module Bitmap
   class Editor
-    attr_reader :file, :bitmap
+    attr_accessor :file, :bitmap
 
     def initialize(file)
       @file = file
@@ -23,6 +24,35 @@ module Bitmap
       end
     end
 
+    def create_bitmap(*args)
+      @bitmap = Data.new(*args)
+    end
+
+    def clear
+      check_bitmap
+      bitmap.clear
+    end
+
+    def colour_pixel(*args)
+      check_bitmap
+      bitmap.colour_pixel(*args)
+    end
+
+    def draw_vertical_line(*args)
+      check_bitmap
+      bitmap.draw_vertical_line(*args)
+    end
+
+    def draw_horizontal_line(*args)
+      check_bitmap
+      bitmap.draw_horizontal_line(*args)
+    end
+
+    def show
+      check_bitmap
+      puts bitmap.to_s
+    end
+
     private
 
     def validate_file
@@ -31,29 +61,11 @@ module Bitmap
 
     def process_line(line)
       cmd, *args = line.split
-
-      validate_command(cmd)
-
-      case cmd
-      when 'I'
-        @bitmap = Data.new(*args)
-      when 'C'
-        bitmap.clear
-      when 'L'
-        bitmap.colour_pixel(*args)
-      when 'V'
-        bitmap.draw_vertical_line(*args)
-      when 'H'
-        bitmap.draw_horizontal_line(*args)
-      when 'S'
-        puts bitmap.to_s
-      else
-        raise 'Unrecognised command.'
-      end
+      Command.new(cmd, args, self).perform
     end
 
-    def validate_command(cmd)
-      return if cmd == 'I' || !!@bitmap
+    def check_bitmap
+      return if @bitmap
       raise 'Please create image before manipulating it.'
     end
   end
