@@ -219,4 +219,19 @@ RSpec.describe Bitmap::Editor do
       end
     end
   end
+
+  context '.fill' do
+    subject { described_obj.fill(1, 2, 'A') }
+
+    context 'bitmap data is not created yet' do
+      it_behaves_like 'manipulating nonexistent data'
+    end
+
+    context 'bitmap data exists' do
+      it_behaves_like 'manipulating nexistent data' do
+        let(:method) { :fill }
+        let(:args) { [1, 2, 'A'] }
+      end
+    end
+  end
 end

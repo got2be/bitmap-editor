@@ -53,6 +53,11 @@ module Bitmap
       puts bitmap.to_s
     end
 
+    def fill(*args)
+      check_bitmap
+      bitmap.fill(*args)
+    end
+
     private
 
     def validate_file
