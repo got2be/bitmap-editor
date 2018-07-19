@@ -6,7 +6,8 @@ module Bitmap
       'L' => :colour_pixel,
       'V' => :draw_vertical_line,
       'H' => :draw_horizontal_line,
-      'S' => :show
+      'S' => :show,
+      'F' => :fill
     }.freeze
     ARGS = {
       'I' => [:int, :int],
@@ -14,7 +15,8 @@ module Bitmap
       'L' => [:int, :int, :str],
       'V' => [:int, :int, :int, :str],
       'H' => [:int, :int, :int, :str],
-      'S' => []
+      'S' => [],
+      'F' => [:int, :int, :str]
     }.freeze
     attr_accessor :cmd, :args, :editor
 

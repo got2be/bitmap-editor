@@ -145,6 +145,61 @@ RSpec.describe Bitmap::Command do
       end
     end
 
+    context 'cmd == F' do
+      let(:cmd) { 'F' }
+
+      context 'no args passed' do
+        let(:args) { [] }
+
+        it_behaves_like 'command with wrong argument number' do
+          let(:expected) { 3 }
+          let(:got) { 0 }
+        end
+      end
+
+      context 'odd args passed' do
+        let(:args) { %w(2 2 B B) }
+
+        it_behaves_like 'command with wrong argument number' do
+          let(:expected) { 3 }
+          let(:got) { 4 }
+        end
+      end
+
+      context 'invalid first arg' do
+        let(:args) { %w(a 2 B) }
+        it_behaves_like 'command with invalid argument' do
+          let(:expected) { 'integer' }
+          let(:got) { 'a' }
+        end
+      end
+
+      context 'invalid second arg' do
+        let(:args) { %w(2 a B) }
+        it_behaves_like 'command with invalid argument' do
+          let(:expected) { 'integer' }
+          let(:got) { 'a' }
+        end
+      end
+
+      context 'invalid third arg' do
+        let(:args) { %w(2 2 BBB) }
+        it_behaves_like 'command with invalid argument' do
+          let(:expected) { 'char' }
+          let(:got) { 'BBB' }
+        end
+      end
+
+      context 'args are correct' do
+        let(:args) { %w(2 2 B) }
+
+        it 'calls editor.fill' do
+          expect(editor).to receive(:fill).with(args[0].to_i, args[1].to_i, args[2]).once
+          subject
+        end
+      end
+    end
+
     shared_examples_for 'draw line command' do
       context 'no args passed' do
         let(:args) { [] }

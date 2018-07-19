@@ -264,4 +264,97 @@ RSpec.describe Bitmap::Data do
       expect(subject).to eq(expected_output)
     end
   end
+
+  describe '.fill' do
+    let(:width) { 5 }
+    let(:height) { 3 }
+    let(:x) { 1 }
+    let(:y) { 1 }
+    let(:colour) { 'A' }
+
+    subject { described_obj.fill(x, y, colour) }
+
+    context 'coordinates are invalid' do
+      context 'x coordinate is too small' do
+        let(:x) { 0 }
+        it_behaves_like 'invalid coordinates'
+      end
+
+      context 'x coordinate is too large' do
+        let(:x) { width + 1 }
+        it_behaves_like 'invalid coordinates'
+      end
+
+      context 'y coordinate is too large' do
+        let(:y) { height + 1 }
+        it_behaves_like 'invalid coordinates'
+      end
+
+      context 'y coordinate is too small' do
+        let(:y) { 0 }
+        it_behaves_like 'invalid coordinates'
+      end
+    end
+
+    context 'colour is invalid' do
+      let(:colour) { 'a' }
+
+      it_behaves_like 'invalid colour'
+    end
+
+    context 'args are valid' do
+      context 'does not have neighbours with same colour' do
+        before do
+          described_obj.colour_pixel(2, 1, 'B')
+          described_obj.colour_pixel(1, 2, 'B')
+        end
+
+        it 'sets the colour of specified pixel' do
+          expect { subject }.to change { described_obj.data[y - 1][x - 1] }.from(default_colour).to(colour)
+        end
+
+        it 'does not change other pixels' do
+          subject
+          expect(groupped_data[colour].length).to eq(1)
+          expect(groupped_data[default_colour].length).to eq(width * height - 3)
+          expect(groupped_data['B'].length).to eq(2)
+        end
+      end
+
+      context 'has neighbours with the same colour' do
+        before do
+          described_obj.draw_vertical_line(3, 1, 3, 'B')
+        end
+
+        it 'fills all neighbours recursively' do
+          subject
+          expect(described_obj.data[0][0]).to eq(colour)
+          expect(described_obj.data[0][1]).to eq(colour)
+          expect(described_obj.data[1][0]).to eq(colour)
+          expect(described_obj.data[1][1]).to eq(colour)
+          expect(described_obj.data[2][0]).to eq(colour)
+          expect(described_obj.data[2][1]).to eq(colour)
+        end
+
+        it 'does not change non-neighbours with the same colour' do
+          subject
+
+          expect(described_obj.data[0][3]).to eq(default_colour)
+          expect(described_obj.data[0][4]).to eq(default_colour)
+          expect(described_obj.data[1][3]).to eq(default_colour)
+          expect(described_obj.data[1][4]).to eq(default_colour)
+          expect(described_obj.data[2][3]).to eq(default_colour)
+          expect(described_obj.data[2][4]).to eq(default_colour)
+        end
+
+        it 'does not change neighbours with other colour' do
+          subject
+
+          expect(described_obj.data[0][2]).to eq('B')
+          expect(described_obj.data[1][2]).to eq('B')
+          expect(described_obj.data[2][2]).to eq('B')
+        end
+      end
+    end
+  end
 end
